@@ -1,17 +1,12 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package criptografia;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
    @date   03 out 2022
@@ -35,666 +30,365 @@ x  b) Permitir que o usuário possa informar o nome do arquivo de destino a ser g
   */
 
 public class Trabalho {
+    
+public static final int[][] sbox = {        
+        //  0     1     2     3     4     5     6     7     8     9     a     b     c     d     e     f
+        {0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76},  // 0
+        {0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0},  // 1
+        {0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc, 0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15},  // 2
+        {0x04, 0xc7, 0x23, 0xc3, 0x18, 0x96, 0x05, 0x9a, 0x07, 0x12, 0x80, 0xe2, 0xeb, 0x27, 0xb2, 0x75},  // 3
+        {0x09, 0x83, 0x2c, 0x1a, 0x1b, 0x6e, 0x5a, 0xa0, 0x52, 0x3b, 0xd6, 0xb3, 0x29, 0xe3, 0x2f, 0x84},  // 4
+        {0x53, 0xd1, 0x00, 0xed, 0x20, 0xfc, 0xb1, 0x5b, 0x6a, 0xcb, 0xbe, 0x39, 0x4a, 0x4c, 0x58, 0xcf},  // 5
+        {0xd0, 0xef, 0xaa, 0xfb, 0x43, 0x4d, 0x33, 0x85, 0x45, 0xf9, 0x02, 0x7f, 0x50, 0x3c, 0x9f, 0xa8},  // 6
+        {0x51, 0xa3, 0x40, 0x8f, 0x92, 0x9d, 0x38, 0xf5, 0xbc, 0xb6, 0xda, 0x21, 0x10, 0xff, 0xf3, 0xd2},  // 7
+        {0xcd, 0x0c, 0x13, 0xec, 0x5f, 0x97, 0x44, 0x17, 0xc4, 0xa7, 0x7e, 0x3d, 0x64, 0x5d, 0x19, 0x73},  // 8
+        {0x60, 0x81, 0x4f, 0xdc, 0x22, 0x2a, 0x90, 0x88, 0x46, 0xee, 0xb8, 0x14, 0xde, 0x5e, 0x0b, 0xdb},  // 9
+        {0xe0, 0x32, 0x3a, 0x0a, 0x49, 0x06, 0x24, 0x5c, 0xc2, 0xd3, 0xac, 0x62, 0x91, 0x95, 0xe4, 0x79},  // A
+        {0xe7, 0xc8, 0x37, 0x6d, 0x8d, 0xd5, 0x4e, 0xa9, 0x6c, 0x56, 0xf4, 0xea, 0x65, 0x7a, 0xae, 0x08},  // B
+        {0xba, 0x78, 0x25, 0x2e, 0x1c, 0xa6, 0xb4, 0xc6, 0xe8, 0xdd, 0x74, 0x1f, 0x4b, 0xbd, 0x8b, 0x8a},  // C
+        {0x70, 0x3e, 0xb5, 0x66, 0x48, 0x03, 0xf6, 0x0e, 0x61, 0x35, 0x57, 0xb9, 0x86, 0xc1, 0x1d, 0x9e},  // D
+        {0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf},  // E
+        {0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16}}; // F
+   
+    public static final int[] sRoundKey = {0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36};
+   
+    static Integer[][] matrizChaveInt = new Integer[4][4];
+    static String[][] matrizChaveHex = new String[4][4];
+   
+    public static void popularMatrizChave(String chave) {
+        String[] matrizChave = chave.split(",");
+        int cont = 0;
+        for (int col = 0; col < matrizChaveInt.length; col++) {
+           for (int lin = 0; lin < matrizChaveInt.length; lin++) {
+                Integer valor = Integer.parseInt(matrizChave[cont]);
+                //System.out.println(lin + "" + col + " - " + valor);
+                matrizChaveInt[col][lin] = valor;
+                matrizChaveHex[col][lin] = Integer.toHexString(valor);
+                cont++;
+           }
+       }
+    }
+   
+    public static void imprimeMatriz(Integer[][] matriz) {
+        System.out.println("\nMatriz integer");
+        for (int col = 0; col < matriz.length; col++) {
+           for (int lin = 0; lin < matriz.length; lin++) {
+                System.out.printf("%3d   ", matriz[lin][col]);
+                if (lin == 3) {
+                    System.out.print("\n");
+                }
+           }
+       }
+    }
+   
+    public static void imprimeMatrizHex(String[][] matriz) {
+        System.out.println("\nMatriz hex");
+        for (int col = 0; col < matriz.length; col++) {
+           for (int lin = 0; lin < matriz.length; lin++) {
+                System.out.printf("%3s   ", matriz[lin][col]);
+                if (lin == 3) {
+                    System.out.print("\n");
+                }
+           }
+       }
+       System.out.println("\n");
+    }
+   
+    public static String[] converteChaveString(String chave, Boolean isHex) {
+        String[] archave = chave.split(",");
+        String[] arTemp = new String[archave.length];
+        for (int i = 0; i < archave.length; i++) {
+            Integer valor = Byte.toUnsignedInt(archave[i].getBytes()[0]);            
+            if (isHex) {
+                arTemp[i] = Integer.toHexString(valor);
+            } else {
+                arTemp[i] = valor.toString();
+            }
+        }
+        return arTemp;
+    }    
+   
+    public static String converteChaveStringToByte(String chave, Boolean isHex) {
+        String[] archave = chave.split(",");
+        String sTemp = "";
+        for (int i = 0; i < archave.length; i++) {
+            Integer valor = Byte.toUnsignedInt(archave[i].getBytes()[0]);            
+            if (isHex) {
+                sTemp += Integer.toHexString(valor) + ",";
+            } else {
+                sTemp += valor.toString() + ",";
+            }
+        }
+        sTemp = sTemp.substring(0, sTemp.length()-1);
+        return sTemp;
+    }    
+   
+    public static void insereLog(String mensagem) {
+        Date dataHoraAtual = new Date();
+        String hora = new SimpleDateFormat("HH:mm:ss").format(dataHoraAtual);
+        //System.out.println(hora + ": " + mensagem);
+        System.out.println(mensagem);
+    }
 
-    Scanner arquivo = new Scanner(System.in);
+    public static String[] extrairColunaArray(String[][] ar, Integer coluna) {
+        String[] arTemp = new String[ar[0].length];
+        for (int i = 0; i < arTemp.length; i++) {
+            arTemp[i] = ar[coluna][i];
+        }
+        return arTemp;
+    }
+   
+    public static void imprimeColunaVetor(String [] arColuna) {        
+        for (int i = 0; i < arColuna.length; i++) {
+            System.out.println(arColuna[i]);
+        }
+    }    
+   
+    public static String[] parte2_rotacionaColunaVetor_RotWord(String[] vetor) {
+        int tamanho = vetor.length;
+        String[] arTemp = new String[tamanho];
+       
+        for (int i = 0; i < vetor.length; i++) {
+            if (i+1 < vetor.length) {
+                arTemp[i] = vetor[i+1];
+            } else {
+                arTemp[i] = vetor[0];
+            }
+        }
+        return arTemp;
+    }
+   
+    public static String substituiSbox(String letra) {
+
+        Character primeira = letra.charAt(0);
+        Character segunda;        
+        if (letra.length() == 1) {
+            segunda = '0';
+        } else {
+            segunda = letra.charAt(1);        
+        }
+        Integer linha = hexToIntegerSBox(primeira);
+        Integer coluna = hexToIntegerSBox(segunda);
+       
+        Integer valor = sbox[linha][coluna];
+       
+        return Integer.toHexString(valor);
+    }
+   
+    public static Integer hexToIntegerSBox(Character c) {
+       
+        if (Character.isDigit(c)) {
+            return Integer.parseInt(c.toString());
+        } else if (c.toString().equalsIgnoreCase("a")) {
+            return 10;    
+        } else if (c.toString().equalsIgnoreCase("b")) {
+            return 11;    
+        } else if (c.toString().equalsIgnoreCase("c")) {
+            return 12;    
+        } else if (c.toString().equalsIgnoreCase("d")) {
+            return 13;    
+        } else if (c.toString().equalsIgnoreCase("e")) {
+            return 14;    
+        } else if (c.toString().equalsIgnoreCase("f")) {
+            return 15;                
+        } else {          
+            return null;
+        }
+    }
+   
+    public static String getRoundKey(Integer value) {
+        return Integer.toHexString(sRoundKey[value]);
+    }
+   
+    public static String[] parte3_substituiPalavra_SubstWord(String[] vetor) {
+        String[] arTemp = new String[vetor.length];
+        for (int i = 0; i < vetor.length; i++) {            
+            arTemp[i] = substituiSbox(vetor[i]);
+        }
+        return arTemp;
+    }
+   
+    public static String[] parte4_getRoundConstant(Integer roundKey) {
+        String[] vetor = new String[4];
+        vetor[0] = getRoundKey(roundKey);
+        vetor[1] = "0";
+        vetor[2] = "0";                
+        vetor[3] = "0";                
+        return vetor;
+    }
+   
+    public static String[] parte5_XorRoundConstant(String[] colunaSubstituida, String[] colunaRoundConstant) {
+        String[] arTemp = new String[colunaSubstituida.length];
+       
+        arTemp[0] = XOR2Hex(colunaSubstituida[0], colunaRoundConstant[0]);
+        arTemp[1] = XOR2Hex(colunaSubstituida[1], colunaRoundConstant[1]);        
+        arTemp[2] = XOR2Hex(colunaSubstituida[2], colunaRoundConstant[2]);        
+        arTemp[3] = XOR2Hex(colunaSubstituida[3], colunaRoundConstant[3]);        
+       
+        return arTemp;
+    }
+   
+    public static Integer HexToInt(String value) {
+        return Integer.parseInt(value, 16);
+    }
+   
+    public static String XOR2Hex(String value1, String value2) {
+        int n1 = HexToInt(value1);
+        int n2 = HexToInt(value2);
+        int n3 = n1 ^ n2;            
+        return Integer.toHexString(n3);
+    }
+   
+    public static String[] parte6_XORRoundKeyAnterior(Integer colunaAtual, String[] colunaXorRoundConstant) {
+        String[] coluna1Anterior = extrairColunaArray(matrizChaveHex, colunaAtual-1-4);
+        String[] arTemp = new String[colunaXorRoundConstant.length];
+       
+        arTemp[0] = XOR2Hex(coluna1Anterior[0], colunaXorRoundConstant[0]);
+        arTemp[1] = XOR2Hex(coluna1Anterior[1], colunaXorRoundConstant[1]);
+        arTemp[2] = XOR2Hex(coluna1Anterior[2], colunaXorRoundConstant[2]);
+        arTemp[3] = XOR2Hex(coluna1Anterior[3], colunaXorRoundConstant[3]);      
+       
+        return arTemp;
+    }
+   
+    public static void insereColunaMatriz(String[][] matriz, String[] vetor, Integer coluna) {        
+        for (int i = 0; i < vetor.length; i++) {
+            matriz[coluna][i] = vetor[i];
+        }
+    }        
+
+    Scanner scanner = new Scanner(System.in);
     String caminhoArquivoEntrada;
-    String caminhoArquivoSaida;
+    String caminhoArquivoDestino;
     String conteudo = "teste";
+    String chave;
     
     public Trabalho() {
         System.out.println("Inicializando classe trabalho");
         
     }
 
-    public void executarLeituraDados() {
-        System.out.println("Informe o caminho do arquivo a ser criptografado. Ex: c:\\temp\\exemplo.txt");
-        caminhoArquivoEntrada = arquivo.nextLine().toUpperCase();
-        lerArquivo(caminhoArquivoEntrada);
+    public void executarLeituraDadosIniciais() {
+        System.out.println("Informe o caminho do arquivo a ser criptografado. - \n"
+                + "(Enter padrao) -> c:\\temp\\exemplo.txt");
+        caminhoArquivoEntrada = scanner.nextLine().toUpperCase();
+        if (caminhoArquivoEntrada.equalsIgnoreCase("")) {
+            caminhoArquivoEntrada = "c:\\temp\\exemplo.txt";
+        }
         
-        System.out.println("Informe o caminho do arquivo de saída . Ex: c:\\temp\\saida.txt");
-        caminhoArquivoSaida = arquivo.nextLine().toUpperCase();
-        escreverArquivo(caminhoArquivoSaida, conteudo);
+        System.out.println("Informe o caminho do arquivo de destino. \n"
+                + "(Enter padrao) -> c:\\temp\\destino.txt");
+        caminhoArquivoDestino = scanner.nextLine().toUpperCase();
+        if (caminhoArquivoDestino.equalsIgnoreCase("")) {
+            caminhoArquivoDestino = "c:\\temp\\destino.txt";
+        }
+        
+        System.out.println("Forneça a chave de criptografia. Valores dos bytes da chave, separando os bytes por vírgula.\n"
+                + "(Enter padrao) -> 20,1,94,33,199,0,48,9,31,94,112,40,59,30,100,248 ");
+        chave = scanner.nextLine().toUpperCase();
+        if (chave.equalsIgnoreCase("")) {
+            chave = "20,1,94,33,199,0,48,9,31,94,112,40,59,30,100,248";
+        }
     }
     
-    public void lerArquivo(String caminho) {
+    public void lerArquivo() {
         try {
-            BufferedReader buffRead = new BufferedReader(new FileReader(caminho));
-            String linha = "";
-            while (true) {
-                    if (linha != null) {
-                        System.out.println(linha);
-                    } else
-                        break;
-                    linha = buffRead.readLine();
-            }
-            buffRead.close();
+            // tratar para ler byte a byte 
+            InputStream entrada = new FileInputStream(caminhoArquivoEntrada);
+            int umByte = entrada.read();
+     
+            while(umByte != -1){
+                System.out.print((char)umByte);
+                try {
+                    umByte = entrada.read();
+                } catch (IOException ex) {
+                    System.out.println(ex.getMessage());
+                }
+            }    
         } catch (IOException ex) {
             System.out.println("ERRO: " + ex.getMessage());
         }
     }
     
-    public void escreverArquivo(String caminho, String conteudo) {
+    public void escreverArquivo() {
         try {
-            BufferedWriter buffWrite = new BufferedWriter(new FileWriter(caminho));
-            buffWrite.append(conteudo);
-            buffWrite.close();
+            System.out.println("Escrevendo arquivo...");
+            byte[] byteArray = conteudo.getBytes();
+            FileOutputStream in = new FileOutputStream(caminhoArquivoDestino) ;  
+            in.write(byteArray);
+            in.close();
          } catch (IOException ex) {
             System.out.println("ERRO: " + ex.getMessage());
         }
     }
     
+    public void expansaoChaves() {
+        
+    }
+    
     public static void main(String[] args) {
-        Trabalho trabalho = new Trabalho();
-        trabalho.executarLeituraDados();
+        //Trabalho trabalho = new Trabalho();
+        //trabalho.executarLeituraDadosIniciais();
+        //trabalho.transformaChaveEmBytes();
         
-        
-    }
-    
-}
-/*
-fonte: https://github.com/rishidewan33/Advanced-Encryption-Standard-Algorithm/blob/master/src/AES.java
-
-
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-
-/**
- * @author Patrick Lu
- * @author Rishi Dewan
- 
-public class AES {
-    
-    /**
-     * S-BOX table used for Key Expansion and Sub-Bytes.
-     
-    public static final String newline = System.getProperty("line.separator"); //The newline for whatever system you choose to run in.
-    public static enum Mode { ECB,CBC };
-    public static final int[][] sbox = {{0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76}, {0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0}, {0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc, 0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15}, {0x04, 0xc7, 0x23, 0xc3, 0x18, 0x96, 0x05, 0x9a, 0x07, 0x12, 0x80, 0xe2, 0xeb, 0x27, 0xb2, 0x75}, {0x09, 0x83, 0x2c, 0x1a, 0x1b, 0x6e, 0x5a, 0xa0, 0x52, 0x3b, 0xd6, 0xb3, 0x29, 0xe3, 0x2f, 0x84}, {0x53, 0xd1, 0x00, 0xed, 0x20, 0xfc, 0xb1, 0x5b, 0x6a, 0xcb, 0xbe, 0x39, 0x4a, 0x4c, 0x58, 0xcf}, {0xd0, 0xef, 0xaa, 0xfb, 0x43, 0x4d, 0x33, 0x85, 0x45, 0xf9, 0x02, 0x7f, 0x50, 0x3c, 0x9f, 0xa8}, {0x51, 0xa3, 0x40, 0x8f, 0x92, 0x9d, 0x38, 0xf5, 0xbc, 0xb6, 0xda, 0x21, 0x10, 0xff, 0xf3, 0xd2}, {0xcd, 0x0c, 0x13, 0xec, 0x5f, 0x97, 0x44, 0x17, 0xc4, 0xa7, 0x7e, 0x3d, 0x64, 0x5d, 0x19, 0x73}, {0x60, 0x81, 0x4f, 0xdc, 0x22, 0x2a, 0x90, 0x88, 0x46, 0xee, 0xb8, 0x14, 0xde, 0x5e, 0x0b, 0xdb}, {0xe0, 0x32, 0x3a, 0x0a, 0x49, 0x06, 0x24, 0x5c, 0xc2, 0xd3, 0xac, 0x62, 0x91, 0x95, 0xe4, 0x79}, {0xe7, 0xc8, 0x37, 0x6d, 0x8d, 0xd5, 0x4e, 0xa9, 0x6c, 0x56, 0xf4, 0xea, 0x65, 0x7a, 0xae, 0x08}, {0xba, 0x78, 0x25, 0x2e, 0x1c, 0xa6, 0xb4, 0xc6, 0xe8, 0xdd, 0x74, 0x1f, 0x4b, 0xbd, 0x8b, 0x8a}, {0x70, 0x3e, 0xb5, 0x66, 0x48, 0x03, 0xf6, 0x0e, 0x61, 0x35, 0x57, 0xb9, 0x86, 0xc1, 0x1d, 0x9e}, {0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf}, {0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16}};
-    /**
-     * Inverse SBOX table used for invSubBytes
-     
-    public static final int[][] invsbox = {{0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb}, {0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb}, {0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d, 0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e}, {0x08, 0x2e, 0xa1, 0x66, 0x28, 0xd9, 0x24, 0xb2, 0x76, 0x5b, 0xa2, 0x49, 0x6d, 0x8b, 0xd1, 0x25}, {0x72, 0xf8, 0xf6, 0x64, 0x86, 0x68, 0x98, 0x16, 0xd4, 0xa4, 0x5c, 0xcc, 0x5d, 0x65, 0xb6, 0x92}, {0x6c, 0x70, 0x48, 0x50, 0xfd, 0xed, 0xb9, 0xda, 0x5e, 0x15, 0x46, 0x57, 0xa7, 0x8d, 0x9d, 0x84}, {0x90, 0xd8, 0xab, 0x00, 0x8c, 0xbc, 0xd3, 0x0a, 0xf7, 0xe4, 0x58, 0x05, 0xb8, 0xb3, 0x45, 0x06}, {0xd0, 0x2c, 0x1e, 0x8f, 0xca, 0x3f, 0x0f, 0x02, 0xc1, 0xaf, 0xbd, 0x03, 0x01, 0x13, 0x8a, 0x6b}, {0x3a, 0x91, 0x11, 0x41, 0x4f, 0x67, 0xdc, 0xea, 0x97, 0xf2, 0xcf, 0xce, 0xf0, 0xb4, 0xe6, 0x73}, {0x96, 0xac, 0x74, 0x22, 0xe7, 0xad, 0x35, 0x85, 0xe2, 0xf9, 0x37, 0xe8, 0x1c, 0x75, 0xdf, 0x6e}, {0x47, 0xf1, 0x1a, 0x71, 0x1d, 0x29, 0xc5, 0x89, 0x6f, 0xb7, 0x62, 0x0e, 0xaa, 0x18, 0xbe, 0x1b}, {0xfc, 0x56, 0x3e, 0x4b, 0xc6, 0xd2, 0x79, 0x20, 0x9a, 0xdb, 0xc0, 0xfe, 0x78, 0xcd, 0x5a, 0xf4}, {0x1f, 0xdd, 0xa8, 0x33, 0x88, 0x07, 0xc7, 0x31, 0xb1, 0x12, 0x10, 0x59, 0x27, 0x80, 0xec, 0x5f}, {0x60, 0x51, 0x7f, 0xa9, 0x19, 0xb5, 0x4a, 0x0d, 0x2d, 0xe5, 0x7a, 0x9f, 0x93, 0xc9, 0x9c, 0xef}, {0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0, 0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61}, {0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d}};
-
-    /**
-     * Galois table used for mixColumns
-     
-    public static final int[][] galois = {{0x02, 0x03, 0x01, 0x01},
-        {0x01, 0x02, 0x03, 0x01},
-        {0x01, 0x01, 0x02, 0x03},
-        {0x03, 0x01, 0x01, 0x02}};
-
-    /**
-     * Inverse Galois table used for invMixColumns
-     
-    public static final int[][] invgalois = {{0x0e, 0x0b, 0x0d, 0x09},
-        {0x09, 0x0e, 0x0b, 0x0d},
-        {0x0d, 0x09, 0x0e, 0x0b},
-        {0x0b, 0x0d, 0x09, 0x0e}};
-
-    /**
-     * RCon array used for Key Expansion
-     
-    public static final int[] rcon = {0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
-        0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39,
-        0x72, 0xe4, 0xd3, 0xbd, 0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a,
-        0x74, 0xe8, 0xcb, 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8,
-        0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef,
-        0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd, 0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc,
-        0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b,
-        0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3,
-        0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd, 0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94,
-        0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20,
-        0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35,
-        0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd, 0x61, 0xc2, 0x9f,
-        0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d, 0x01, 0x02, 0x04,
-        0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63,
-        0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd,
-        0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb};
-    
-    static String key = "";
-    static String iv = "";
-    static String ftw = "";
-    static BufferedReader keyreader;
-    static BufferedReader input;
-    static Mode mode;
-    static FileWriter out;
-    static int keyFileIndex = 1; //Index where the keyFile argument should be. Used to determines the index of other arguments.
-    
-    /**
-     * Empty AES constructor.
-     
-    public AES() {
-        //Nothing to initialize here.
-    }
-
-    /**
-     * Main method with which we run the AES algorithm.
-     * Usage: java AES e|d [-length] [-mode] keyFile inputFile
-     * @param args Array of command line arguments.
-     
-    public static void main(String args[]) throws IOException 
-    {
-        /*
-         * args[0] should be either "e" or "d"
-         * args[1] and args[2] should correspond to the following:
-         *
-         * -length => "128" or "256"
-         * -mode => "ecb" or "cbc"
-         * neither -length nor -mode: args[1] should be the keyFile, and args[2] should be the inputFile
-         *
-         * args[3] and args[4] should exist only if -length was specified:
-         
-        try 
-        {
-            int keysizecheck = 128; //User's intended key size.
-            if (!args[1].equals("-length")) //No optional length argument given.
-            {
-                if(!args[1].equals("-mode")) //No optional mode given either;
-                {
-                    //Defaults to 128-bit key size and ECB.
-                }
-                else //Mode option was given;
-                {
-                    mode = args[2].equals("ecb") ? Mode.ECB : Mode.CBC;
-                    keyFileIndex += 2;
-                }
-            } 
-            else //-length was explicitly given.
-            {
-                keyFileIndex+=2;
-                keysizecheck = Integer.parseInt(args[keyFileIndex-1]);
-                if(args[3].equals("-mode")) //Both -length and -mode options were given
-                {
-                    mode = args[4].equals("ecb") ? Mode.ECB : Mode.CBC;
-                    keyFileIndex+=2;
-                }
-                
-            }
-            keyreader = new BufferedReader(new FileReader(args[keyFileIndex]));
-            key = keyreader.readLine();
-            if(key.length() *4 != keysizecheck) //Check to see if user's intended key size matches the size of key in file.
-            {
-                throw new Exception("Error: Attemping to use a " + key.length() * 4 + "-bit key with AES-"+keysizecheck);
-            }           
-            input = new BufferedReader(new FileReader(args[keyFileIndex+1]));
-            if(mode == Mode.CBC)
-            {
-                iv = keyreader.readLine();
-                if(iv == null)
-                {
-                    throw new Exception("Error: Initialization Vector required for CBC Mode.");
-                }
-                else if(iv.length() != 32)
-                {
-                    throw new Exception("Error: Size of Initialization Vector must be 32 bytes.");
-                }
-            }
-            ftw += args[keyFileIndex+1];
+        //trabalho.lerArquivo();
+        //trabalho.escreverArquivo();
+        try {
+            String chave = "A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P";            
+            //String chave = "20,1,94,33,199,0,48,9,31,94,112,40,59,30,100,248";
+            //String[] archaveInt = converteChaveString(chave, false);
+            //String chaveInt = Arrays.toString(archaveInt);
+            String chaveInt = converteChaveStringToByte(chave, false);
+           
+            insereLog("Chave: " + chaveInt);
+            popularMatrizChave(chaveInt);
+            imprimeMatriz(matrizChaveInt);
+            imprimeMatrizHex(matrizChaveHex);
+           
+            //------------------------------------------------------------------
+            //  EXPANSÂO DE CHAVE
+            //------------------------------------------------------------------
+            insereLog("--- Expansão de chave ---");
+            String[] coluna3 = extrairColunaArray(matrizChaveHex, 3);            
+           
+            insereLog("Imprime coluna 3");
+            imprimeColunaVetor(coluna3);
+           
+            insereLog("--- parte 2 ? rotacionar os bytes --- byte0->byte1  byte1->byte2   byte2->byte3  byte3->byte0 ");                        
+            String[] colunaRotacionada = parte2_rotacionaColunaVetor_RotWord(coluna3);
+            insereLog("Imprime coluna 3 Rotacionada");
+            imprimeColunaVetor(colunaRotacionada);
+           
+            insereLog("--- parte 3 ? substituição de palavra --- converte na SBOX ");                        
+            String[] colunaSubstituida = parte3_substituiPalavra_SubstWord(colunaRotacionada);
+            imprimeColunaVetor(colunaSubstituida);
+             
+            insereLog("--- parte 4 ? gera a RoundConstant --- ");
+            String[] colunaRoundConstant = parte4_getRoundConstant(1);
+            imprimeColunaVetor(colunaRoundConstant);
+           
+            insereLog("--- parte 5 ? XOR com a RoundConstant --- ");
+            String[] colunaXorRoundConstant = parte5_XorRoundConstant(colunaSubstituida, colunaRoundConstant);
+            imprimeColunaVetor(colunaXorRoundConstant);
+           
+            insereLog("--- parte 6 ? gerarPrimeiraPalavraProximaRondKey --- ");                        
+            String[] primeiraColunaProximaRoundKey = parte6_XORRoundKeyAnterior(5, colunaXorRoundConstant);
+            imprimeColunaVetor(primeiraColunaProximaRoundKey);
+           
+            //insere coluna matrix
+            String[][] matrix2 = new String[4][4];
+            matrix2[0][0] = "A";
+            matrix2[0][1] = "B";
+            matrix2[0][2] = "C";
+            matrix2[0][3] = "D";
+            imprimeMatrizHex(matrix2);
+           
+            insereColunaMatriz(matrix2, primeiraColunaProximaRoundKey, 0);
+            imprimeMatrizHex(matrix2);
+           
+           
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
-        catch (Exception e) 
-        {
-            System.err.println(e.getMessage() + newline);
-            System.exit(1);
-        }
-        
-        AES aes = new AES();
-        if (args[0].equalsIgnoreCase("e")) 
-        {
-            out = new FileWriter(ftw + ".enc");
-            int numRounds = 10 + (((key.length() * 4 - 128) / 32));
-            String line = input.readLine();
-            int[][] state, initvector = new int[4][4];
-            int[][] keymatrix = aes.keySchedule(key);
-            if(mode == Mode.CBC)
-            {
-                for (int i = 0; i < 4; i++)
-                {
-                    for (int j = 0; j < 4; j++) {
-                        initvector[j][i] = Integer.parseInt(iv.substring((8 * i) + (2 * j), (8 * i) + (2 * j + 2)), 16);
-                    }
-                }
-            }
-            while (line != null) {
-                if (line.matches("[0-9A-F]+")) //If line is valid (i.e. contains valid hex characters, encrpyt. Otherwise, skip line. 
-                {
-                    if (line.length() < 32) {
-                        line = String.format("%032x",Integer.parseInt(line, 16));
-                    }
-                    state = new int[4][4];
-                    for (int i = 0; i < 4; i++) //Parses line into a matrix
-                    {
-                        for (int j = 0; j < 4; j++) {
-                            state[j][i] = Integer.parseInt(line.substring((8 * i) + (2 * j), (8 * i) + (2 * j + 2)), 16);
-                        }
-                    }
-                    if(mode == Mode.CBC)
-                    {
-                        aes.addRoundKey(state, initvector);   
-                    }
-                    aes.addRoundKey(state, aes.subKey(keymatrix, 0)); //Starts the addRoundKey with the first part of Key Expansion
-                    for (int i = 1; i < numRounds; i++) {
-                        aes.subBytes(state); //implements the Sub-Bytes subroutine.
-                        aes.shiftRows(state); //implements Shift-Rows subroutine.
-                        aes.mixColumns(state);
-                        aes.addRoundKey(state, aes.subKey(keymatrix, i));
-                    }
-                    aes.subBytes(state); //implements the Sub-Bytes subroutine.
-                    aes.shiftRows(state); //implements Shift-Rows subroutine.
-                    aes.addRoundKey(state, aes.subKey(keymatrix, numRounds));
-                    if(mode == Mode.CBC)
-                    {
-                        initvector = state;
-                    }
-                    out.write(MatrixToString(state) + newline); //If all systems could just use the same newline, I'd be set.
-                    line = input.readLine();
-                } 
-                else 
-                {
-                    line = input.readLine();
-                }
-            }
-            input.close();
-            out.close();
-        } 
-        else if (args[0].equalsIgnoreCase("d")) //Decryption Mode 
-        {
-            out = new FileWriter(ftw + ".dec");
-            int numRounds = 10 + (((key.length() * 4 - 128) / 32));
-            String line = input.readLine();
-            int[][] state = new int[4][4];
-            int[][] initvector = new int[4][4];
-            int[][] nextvector = new int[4][4];
-            int[][] keymatrix = aes.keySchedule(key);
-            if(mode == Mode.CBC) //Parse Initialization Vector
-            {
-                for (int i = 0; i < 4; i++)
-                {
-                    for (int j = 0; j < 4; j++) {
-                        initvector[j][i] = Integer.parseInt(iv.substring((8 * i) + (2 * j), (8 * i) + (2 * j + 2)), 16);
-                    }
-                }                
-            }
-            while (line != null) {
-                state = new int[4][4];
-                for (int i = 0; i < state.length; i++) //Parses line into a matrix
-                {
-                    for (int j = 0; j < state[0].length; j++) {
-                        state[j][i] = Integer.parseInt(line.substring((8 * i) + (2 * j), (8 * i) + (2 * j + 2)), 16);
-                    }
-                }
-                if(mode == Mode.CBC)
-                {
-                    aes.deepCopy2DArray(nextvector,state);
-                }
-                aes.addRoundKey(state, aes.subKey(keymatrix, numRounds));
-                for (int i = numRounds - 1; i > 0; i--) {
-                    aes.invShiftRows(state);
-                    aes.invSubBytes(state);
-                    aes.addRoundKey(state, aes.subKey(keymatrix, i));
-                    aes.invMixColumns(state);
-                }
-                aes.invShiftRows(state);
-                aes.invSubBytes(state); 
-                aes.addRoundKey(state, aes.subKey(keymatrix, 0));
-                if(mode == Mode.CBC)
-                {
-                    aes.addRoundKey(state, initvector);
-                    aes.deepCopy2DArray(initvector,nextvector);
-                }
-                out.write(MatrixToString(state) + newline);
-                line = input.readLine();
-            }
-            input.close();
-            out.close();
-        } 
-        else 
-        {
-            System.err.println("Usage for Encryption: java AES e keyFile inputFile");
-            System.err.println("Usage for Decryption: java AES d keyFile encryptedinputFile");
-        } 
-    }
-
-    //Helper method which executes a deep copy of a 2D array. (dest,src)
-    private void deepCopy2DArray(int[][] destination, int[][] source)
-    {
-        assert destination.length == source.length && destination[0].length == source[0].length;
-        for(int i = 0; i < destination.length;i++)
-        {
-            System.arraycopy(source[i], 0, destination[i], 0, destination[0].length);
-        }
-    }
-
-    /**
-     * Pulls out the subkey from the key formed from the keySchedule method
-     * @param km key formed from AES.keySchedule()
-     * @param begin index of where to fetch the subkey
-     * @return The chunk of the scheduled key based on begin.
-     
-
-    private int[][] subKey(int[][] km, int begin) {
-        int[][] arr = new int[4][4];
-        for (int i = 0; i < arr.length; i++) {
-            for (int j = 0; j < arr.length; j++) {
-                arr[i][j] = km[i][4 * begin + j];
-            }
-        }
-        return arr;
-    }
-
-    /**
-     * Replaces all elements in the passed array with values in sbox[][].
-     * @param arr Array whose value will be replaced
-     * @return The array who's value was replaced.
-     
-    public void subBytes(int[][] arr) {
-        for (int i = 0; i < arr.length; i++) //Sub-Byte subroutine
-        {
-            for (int j = 0; j < arr[0].length; j++) {
-                int hex = arr[j][i];
-                arr[j][i] = sbox[hex / 16][hex % 16];
-            }
-        }
-    }
-
-    /**
-     * Inverse rendition of the subBytes. The operations of invSubBytes are the reverse operations of subBytes.
-     * @param arr the array that is passed.
-     
-
-    public void invSubBytes(int[][] arr) {
-        for (int i = 0; i < arr.length; i++) //Inverse Sub-Byte subroutine
-        {
-            for (int j = 0; j < arr[0].length; j++) {
-                int hex = arr[j][i];
-                arr[j][i] = invsbox[hex / 16][hex % 16];
-            }
-        }
-    }
-
-    /**
-     * Performs a left shift on each row of the matrix.
-     * Left shifts the nth row n-1 times.
-     * @param arr the reference of the array to perform the rotations.
-     
-
-    public void shiftRows(int[][] arr) {
-        for (int i = 1; i < arr.length; i++) {
-            arr[i] = leftrotate(arr[i], i);
-        }
-    }
-
-    /**
-     * Left rotates a given array. The size of the array is assumed to be 4.
-     * If the number of times to rotate the array is divisible by 4, return the array
-     * as it is.
-     * @param arr The passed array (assumed to be of size 4)
-     * @param times The number of times to rotate the array.
-     * @return the rotated array.
-     
-
-    private int[] leftrotate(int[] arr, int times)
-    {
-        assert(arr.length == 4);
-        if (times % 4 == 0) {
-            return arr;
-        }
-        while (times > 0) {
-            int temp = arr[0];
-            for (int i = 0; i < arr.length - 1; i++) {
-                arr[i] = arr[i + 1];
-            }
-            arr[arr.length - 1] = temp;
-            --times;
-        }
-        return arr;
-    }
-
-    /**
-     * Inverse rendition of ShiftRows (this time, right rotations are used).
-     * @param arr the array to compute right rotations.
-     
-
-    public void invShiftRows(int[][] arr) {
-        for (int i = 1; i < arr.length; i++) {
-            arr[i] = rightrotate(arr[i], i);
-        }
-    }
-
-    /**
-     * Right reverses the array in a similar fashion as leftrotate
-     * @param arr
-     * @param times
-     * @return
-     
-
-    private int[] rightrotate(int[] arr, int times) {
-        if (arr.length == 0 || arr.length == 1 || times % 4 == 0) {
-            return arr;
-        }
-        while (times > 0) {
-            int temp = arr[arr.length - 1];
-            for (int i = arr.length - 1; i > 0; i--) {
-                arr[i] = arr[i - 1];
-            }
-            arr[0] = temp;
-            --times;
-        }
-        return arr;
-    }
-
-    /**
-     * Performed by mapping each element in the current matrix with the value
-     * returned by its helper function.
-     * @param arr the array with we calculate against the galois field matrix.
-     
-
-    public void mixColumns(int[][] arr) //method for mixColumns
-    {
-        int[][] tarr = new int[4][4];
-        for(int i = 0; i < 4; i++)
-        {
-            System.arraycopy(arr[i], 0, tarr[i], 0, 4);
-        }
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                arr[i][j] = mcHelper(tarr, galois, i, j);
-            }
-        }
-    }
-
-    /**
-     * Helper method of mixColumns in which compute the mixColumn formula on each element.
-     * @param arr passed in current matrix
-     * @param g the galois field
-     * @param i the row position
-     * @param j the column position
-     * @return the computed mixColumns value
-     
-
-    private int mcHelper(int[][] arr, int[][] g, int i, int j)
-    {
-        int mcsum = 0;
-        for (int k = 0; k < 4; k++) {
-            int a = g[i][k];
-            int b = arr[k][j];
-            mcsum ^= mcCalc(a, b);
-        }
-        return mcsum;
-    }
-
-    private int mcCalc(int a, int b) //Helper method for mcHelper
-    {
-        if (a == 1) {
-            return b;
-        } else if (a == 2) {
-            return MCTables.mc2[b / 16][b % 16];
-        } else if (a == 3) {
-            return MCTables.mc3[b / 16][b % 16];
-        }
-        return 0;
-    }
-
-    public void invMixColumns(int[][] arr) {
-        int[][] tarr = new int[4][4];
-        for(int i = 0; i < 4; i++)
-        {
-            System.arraycopy(arr[i], 0, tarr[i], 0, 4);
-        }
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                arr[i][j] = invMcHelper(tarr, invgalois, i, j);
-            }
-        }
-    }
-
-    private int invMcHelper(int[][] arr, int[][] igalois, int i, int j) //Helper method for invMixColumns
-    {
-        int mcsum = 0;
-        for (int k = 0; k < 4; k++) {
-            int a = igalois[i][k];
-            int b = arr[k][j];
-            mcsum ^= invMcCalc(a, b);
-        }
-        return mcsum;
-    }
-
-    /**
-     * Helper computing method for inverted mixColumns.
-     *
-     * @param a Row Position of mcX.
-     * @param b Column Position of mcX
-     * @return the value in the corresponding mcX table based on the a,b coordinates.
-     
-
-    private int invMcCalc(int a, int b) //Helper method for invMcHelper
-    {
-        if (a == 9) {
-            return MCTables.mc9[b / 16][b % 16];
-        } else if (a == 0xb) {
-            return MCTables.mc11[b / 16][b % 16];
-        } else if (a == 0xd) {
-            return MCTables.mc13[b / 16][b % 16];
-        } else if (a == 0xe) {
-            return MCTables.mc14[b / 16][b % 16];
-        }
-        return 0;
-    }
-
-    /**
-     *The keyScheduling algorithm to expand a short key into a number of separate round keys.
-     *
-     * @param key the key in which key expansion will be computed upon.
-     * @return the fully computed expanded key for the AES encryption/decryption.
-     *
-
-    public int[][] keySchedule(String key)
-    {
-
-        int binkeysize = key.length() * 4;
-        int colsize = binkeysize + 48 - (32 * ((binkeysize / 64) - 2)); //size of key scheduling will be based on the binary size of the key.
-        int[][] keyMatrix = new int[4][colsize / 4]; //creates the matrix for key scheduling
-        int rconpointer = 1;
-        int[] t = new int[4];
-        final int keycounter = binkeysize / 32;
-        int k;
-
-        for (int i = 0; i < keycounter; i++) //the first 1 (128-bit key) or 2 (256-bit key) set(s) of 4x4 matrices are filled with the key.
-        {
-            for (int j = 0; j < 4; j++) {
-                keyMatrix[j][i] = Integer.parseInt(key.substring((8 * i) + (2 * j), (8 * i) + (2 * j + 2)), 16);
-            }
-        }
-        int keypoint = keycounter;
-        while (keypoint < (colsize / 4)) {
-            int temp = keypoint % keycounter;
-            if (temp == 0) {
-                for (k = 0; k < 4; k++) {
-                    t[k] = keyMatrix[k][keypoint - 1];
-                }
-                t = schedule_core(t, rconpointer++);
-                for (k = 0; k < 4; k++) {
-                    keyMatrix[k][keypoint] = t[k] ^ keyMatrix[k][keypoint - keycounter];
-                }
-                keypoint++;
-            } else if (temp == 4) {
-                for (k = 0; k < 4; k++) {
-                    int hex = keyMatrix[k][keypoint - 1];
-                    keyMatrix[k][keypoint] = sbox[hex / 16][hex % 16] ^ keyMatrix[k][keypoint - keycounter];
-                }
-                keypoint++;
-            } else {
-                int ktemp = keypoint + 3;
-                while (keypoint < ktemp) {
-                    for (k = 0; k < 4; k++) {
-                        keyMatrix[k][keypoint] = keyMatrix[k][keypoint - 1] ^ keyMatrix[k][keypoint - keycounter];
-                    }
-                    keypoint++;
-                }
-            }
-        }
-        return keyMatrix;
-    }
-
-    /**
-     * For every (binary key size / 32)th column in the expanded key. We compute a special column
-     * using sbox and an XOR of the an rcon number with the first element in the passed array.
-     * 
-     * @param in the array in which we compute the next set of bytes for key expansion
-     * @param rconpointer the element in the rcon array with which to XOR the first element in 'in'
-     * @return the next column in the key scheduling.
-     *
-
-    public int[] schedule_core(int[] in, int rconpointer) {
-        in = leftrotate(in, 1);
-        int hex;
-        for (int i = 0; i < in.length; i++) {
-            hex = in[i];
-            in[i] = sbox[hex / 16][hex % 16];
-        }
-        in[0] ^= rcon[rconpointer];
-        return in;
-    }
-
-    **
-     * In the AddRoundKey step, the subkey is combined with the state. For each round, a chunk of the key scheduled is pulled; each subkey is the same size as the state. Each element in the byte matrix is XOR'd with each element in the chunk of the expanded key.
-     * 
-     * @param state reference of the matrix in which addRoundKey will be computed upon.
-     * @param keymatrix chunk of the expanded key
-     
-
-    public void addRoundKey(int[][] bytematrix, int[][] keymatrix)
-    {
-        for (int i = 0; i < bytematrix.length; i++) {
-            for (int j = 0; j < bytematrix[0].length; j++) {
-                bytematrix[j][i] ^= keymatrix[j][i];
-            }
-        }
-    }
-
-     *
-     * ToString() for the matrix (2D array).
-     * 
-     * @param m reference of the matrix
-     * @return the string representation of the matrix.
-     *
-
-    public static String MatrixToString(int[][] m) //takes in a matrix and converts it into a line of 32 hex characters.
-    {
-        String t = "";
-        for (int i = 0; i < m.length; i++) {
-            for (int j = 0; j < m[0].length; j++) {
-                String h = Integer.toHexString(m[j][i]).toUpperCase();
-                if (h.length() == 1) {
-                    t += '0' + h;
-                } else {
-                    t += h;
-                }
-            }
-        }
-        return t;
     }
 }
-*/
