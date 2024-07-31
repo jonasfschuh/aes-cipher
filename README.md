@@ -1,5 +1,5 @@
 # aes-cipher
-Trabalho Acadêmico da disciplina de Segurança da Informação. Se trate da implementação de um algoritmo de criptografia AES.
+Trabalho Acadêmico da disciplina de Segurança da Informação. Se trata da implementação de um algoritmo de criptografia AES.
 
 *Obs.: não será implementado a decifragem.
 
